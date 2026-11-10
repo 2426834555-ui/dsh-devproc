@@ -1,0 +1,33 @@
+﻿{
+  "name": "dsh-devproc",
+  "version": "1.2.0",
+  "type": "module",
+  "description": "Show the running dev server (port / dist path) above the composer, plus an editing/done marker, with copy-path and stop-process actions; the WeChat button opens the current dist via the IDE CLI.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./dsh.bundle.patch.yml": "./dsh.bundle.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "dsh.bundle.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./dsh.bundle.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": false,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  }
+}
