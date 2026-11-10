@@ -1,8 +1,8 @@
-﻿{
+{
   "name": "dsh-devproc",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "type": "module",
-  "description": "Show the running dev server (port / dist path) above the composer, plus an editing/done marker, with copy-path and stop-process actions; the WeChat button opens the current dist via the IDE CLI.",
+  "description": "Show the running dev server (port / dist path) above the composer, plus an editing/done marker, with copy-path and stop-process actions; the WeChat button opens the current dist via the IDE CLI; project and IDE paths are auto-detected, nothing hardcoded.",
   "license": "MIT",
   "engines": {
     "node": ">=20"

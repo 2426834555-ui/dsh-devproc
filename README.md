@@ -10,7 +10,8 @@
 
 | | 说明 |
 | --- | --- |
-| 进程识别 | 复用项目里的 `scripts/devctl.mjs` 扫进程与监听端口，认 uni-app / vite / Java / Python / Node / Go / .NET 等 |
+| 进程识别 | 插件自带 `lib/devctl.mjs` 扫进程与监听端口，认 uni-app / vite / Java / Python / Node / Go / .NET 等；**不需要往项目里放任何脚本** |
+| 项目定位 | 设置里的项目路径 → 环境变量 `DSH_DEVPROC_PROJECT` → 从运行中的 dev 进程命令行自动推断（不硬编码任何人的路径） |
 | 平台区分 | uni-app 显示「小程序 / H5 / 支付寶…」；小程序显示产物目录，H5 显示 `http://127.0.0.1:<端口>` |
 | 胶囊按钮 | `⧉` 复制地址 `↗` 打开浏览器 `▤` 打开产物目录 `微` 微信开发者工具 `✕` 关进程 |
 | 改动标记 | 琥珀色呼吸点「正在修改」→ 绿点「已改好 ✓」 |
@@ -76,8 +77,11 @@ pnpm add "dsh-workspace-explorer@link:../../plugins/dsh-workspace-explorer-fork"
 
 ## 配置
 
-设置页 →「终端进程」：刷新间隔、项目路径（留空用当前工作区）、只显示平台、URL 真实探测、微信开发者工具 `cli.bat` 路径。
+设置页 →「终端进程」：刷新间隔、项目路径（留空自动推断）、只显示平台、URL 真实探测、微信开发者工具 `cli.bat` 路径（留空自动从注册表找）。
 配置文件：`~/.dsh/dsh-devproc.config.json`。
+
+项目路径按这个顺序取：设置里的 `project` → 环境变量 `DSH_DEVPROC_PROJECT` → `devctl` 从运行中的 dev 进程命令行推断（比如命令行里出现 `...\munich-mini\node_modules\...` 就取 `C:\jobCode\munich-mini`）。
+所以同事 clone 下来、装好、跑起自己的 dev，就能直接用，不需要改代码，也不需要在项目里放 `scripts/devctl.mjs`。
 
 ## 改动标记怎么来的
 
@@ -104,6 +108,7 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:<DSH端口>/api/devproc/age
 
 微信开发者工具默认恢复上次打开的项目，只有走它的 CLI 或服务端口才能指定项目。现在的做法：
 
+0. `cli.bat` 的位置从注册表卸载项里读（`InstallLocation` / `DisplayIcon` / `UninstallString`，`HKLM` + `WOW6432Node` + `HKCU` 三处都扫），所以装在哪个盘都能找到；找不到才回落到常见安装路径，或由你在设置里填。
 1. IDE 设置 → 安全设置 → **服务端口** 开启（只需一次，之后 `%LOCALAPPDATA%\微信开发者工具\User Data\<hash>\Default\.ide-status` 为 `On`）。
 2. 插件读同目录的 `.ide` 拿端口，先试 `GET http://127.0.0.1:<端口>/open?projectpath=<产物目录>`（`method: "rest"`，1.5s 超时）。
 3. 不通就跑 `<安装目录>\node.exe cli.js open --project <产物目录>`（**不走 `cmd /c`**：中文路径加引号转义会被 cmd 吃掉，报「不是内部或外部命令」），并预喂 `y` 应答端口确认，25s 超时。
@@ -123,6 +128,18 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:<DSH端口>/api/devproc/age
 | POST | `/api/devproc/open` | `{target}` 打开 URL 或项目内目录 |
 | POST | `/api/devproc/wechat` | `{target}` 用开发者工具打开产物目录 |
 | GET/POST | `/api/devproc/agent` | 读取 / 上报改动状态 |
+
+## 单独的进程探测（可选）
+
+`lib/devctl.mjs` 不依赖插件，可以单独用（排查「胶囊没显示」时很方便）：
+
+```powershell
+node "$HOME\.dsh\plugins\dsh-devproc\lib\devctl.mjs" status        # 人看
+node "$HOME\.dsh\plugins\dsh-devproc\lib\devctl.mjs" status --json # 机器看
+node "$HOME\.dsh\plugins\dsh-devproc\lib\devctl.mjs" stop          # 关掉 dev 进程
+```
+
+`--project <目录>` 可指定项目；不给就按进程命令行推断。输出里的 `project` / `inferred` 就是插件实际用的项目根。
 
 ## 开发
 
