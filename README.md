@@ -1,24 +1,25 @@
 # dsh-devproc
 
+> 这是**两个独立插件之一**。另一个是工作区文件树：[dsh-workspace-explorer-fork](https://github.com/2426834555-ui/dsh-workspace-explorer-fork)。
+> 两者互不依赖，各自克隆、各自安装；一起装才和作者的界面一致。
+
 输入框上方的开发进程胶囊：显示 `/api/devproc/status` 里跑着的 dev server（uni 小程序 / H5 / 后端），
 带复制地址、打开浏览器、打开产物目录、「微」开微信开发者工具、关进程。
 
-## 安装
+## 安装（换电脑照抄）
 
 ```powershell
-# 1) 克隆到任意位置
-git clone https://github.com/<你的账号>/dsh-devproc.git "$HOME\.dsh\plugins\dsh-devproc"
+# 1) 克隆插件本体
+git clone https://github.com/2426834555-ui/dsh-devproc.git "$HOME\.dsh\plugins\dsh-devproc"
 
-# 2) 让 profile 认出它（等价于 pnpm link 进 node_modules）
+# 2) 装进当前 profile
 cd "$HOME\.dsh\profiles\desktop"
-#   package.json 的 dependencies 里加：  "dsh-devproc": "link:../../plugins/dsh-devproc"
-#   dsh.profile.bundles 里加：           "dsh-devproc"
-pnpm install
-
-# 3) 重启 DSH（或 设置 → 插件 里关/开 dsh-devproc）
+pnpm add "dsh-devproc@link:../../plugins/dsh-devproc"
 ```
 
-也可以不装成 bundle，而是在 `~/.dsh/profiles/<你的 profile>/cordis.patch.yml` 里直接插入：
+然后在 `$HOME\.dsh\profiles\desktop\package.json` 的 `dsh.profile.bundles` 数组里加一行 `"dsh-devproc"`，重启 DSH。
+
+不用 pnpm 也行，直接在 `cordis.patch.yml` 末尾追加：
 
 ```yaml
 - insert:
@@ -26,7 +27,23 @@ pnpm install
       name: dsh-devproc
 ```
 
-卸载：`node uninstall.mjs`。
+装完会在输入框上方出现胶囊。卸载：`node "$HOME\.dsh\plugins\dsh-devproc\uninstall.mjs"`。
+
+## 两个插件一起装
+
+```powershell
+git clone https://github.com/2426834555-ui/dsh-devproc.git "$HOME\.dsh\plugins\dsh-devproc"
+git clone https://github.com/2426834555-ui/dsh-workspace-explorer-fork.git "$HOME\.dsh\plugins\dsh-workspace-explorer-fork"
+
+cd "$HOME\.dsh\profiles\desktop"
+pnpm add "dsh-devproc@link:../../plugins/dsh-devproc"
+pnpm add "dsh-workspace-explorer@link:../../plugins/dsh-workspace-explorer-fork"
+# 然后 package.json → dsh.profile.bundles 里加：
+#   "dsh-devproc"
+#   "dsh-workspace-explorer"
+# 重启 DSH，两个都出现
+```
+
 
 ## 配置项
 
@@ -65,6 +82,7 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:<port>/api/devproc/agent -C
 - `POST /api/devproc/stop` 关进程（`{pid}` 只关一条）
 - `POST /api/devproc/open` 打开 URL / 目录
 - `POST /api/devproc/wechat` 微信开发者工具打开产物目录
+- `GET|POST /api/devproc/agent` 代理改动状态
 
 ### 「微」按钮为什么会打开错项目
 
@@ -74,6 +92,5 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:<port>/api/devproc/agent -C
 2. 插件读 `%LOCALAPPDATA%\微信开发者工具\User Data\<hash>\Default\.ide` 拿端口；`/open?projectpath=` 能通就切过去（`method: "rest"`）。
 3. 否则起 `<安装目录>\node.exe cli.js open --project <产物目录>`（不走 `cmd /c`，中文路径 + 引号转义会被 cmd 吃掉），并预喂 `y` 应答端口确认，超时 25s。
 4. 端口没开时返回 `needsServicePort: true`，胶囊提示「服务端口没开」。
-- `GET|POST /api/devproc/agent` 代理改动状态
 
 改完服务端代码需要在设置 → 插件里关再开 `dsh-devproc`（或重启 App）才会重载；客户端代码刷新页面生效。
